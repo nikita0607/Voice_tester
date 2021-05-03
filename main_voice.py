@@ -8,6 +8,30 @@ class Voice:
         self.recognizer = speech_recognition.Recognizer()
         self.microphone = speech_recognition.Microphone()
 
+    def get_voice_and_accuracity(self, real_answer, answer: str = None):
+
+        if answer is None:
+            answer = self.record_and_recognize_audio()
+        s = 0
+
+        answer = " " + answer + " "
+
+        # Проверяем количество вхождений ключевых слов
+        for i in real_answer:
+            if isinstance(i, str):
+                if i in answer:
+                    s += 1
+            else:
+                for k in i:
+                    if k in answer:
+                        s += 1
+                        break
+
+        # Вычисляем точность ответа
+        accuracity = min((s / len(real_answer)) * 100, 100)
+
+        return accuracity
+
     def record_and_recognize_audio(self, *args: tuple):
         """
         Запись и распознавание аудио
@@ -19,16 +43,16 @@ class Voice:
             self.recognizer.adjust_for_ambient_noise(self.microphone, duration=2)
 
             try:
-                print("Listening...")
+                print("начинаем прослушивание...")
                 audio = self.recognizer.listen(self.microphone, 5, 5)
 
             except speech_recognition.WaitTimeoutError:
-                print("Микро?")
+                print("Проверьте микрофон?")
                 return
 
             # использование online-распознавания через Google
             try:
-                print("Started recognition...")
+                print("Начинаем преобразование в текст...")
                 recognized_data = self.recognizer.recognize_google(audio, language="ru").lower()
 
             except speech_recognition.UnknownValueError:
@@ -36,32 +60,21 @@ class Voice:
 
             # в случае проблем с доступом в Интернет происходит выброс ошибки
             except speech_recognition.RequestError:
-                print("Check your Internet Connection, please")
+                print("Пожалуйста, проверьте подключение к интернету")
 
-            return recognized_data
+            return recognized_data.lower()
 
 
 if __name__ == "__main__":
     voice = Voice()
-    try:
-        answer = voice.record_and_recognize_audio().lower()
-        print("Ответ:", answer)
+    test = [[" провожу ", " тестир"], [" тест ", " прогр"]]
+    print("Ответь на вопрос, что ты сейчас делаешь")
 
-        real_answer = ["никита", ["бог", "красавчик"]]
-        s = 0
+    while True:
+        answer = voice.record_and_recognize_audio()
+        print(f"Ваш ответ: {answer}")
 
-        for i in real_answer:
-            if type(i) == type(str()):
-                if i in answer:
-                    s += 1
-            else:
-                for k in i:
-                    if k in answer:
-                        s += 1
-                        break
-            print(s)
-        accuracity = (s / len(real_answer)) * 100
-        print(f"Точность ответа: {accuracity}%")
+        if input("Это ваш ответ? д/н: ").lower() == "д":
+            break
 
-    except:
-        pass
+    print("Точность ответа на тестовый вопрос:", voice.get_voice_and_accuracity(test, answer), "%")
