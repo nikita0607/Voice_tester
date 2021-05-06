@@ -1,0 +1,1 @@
+SERVER_ADRESS = ("localhost", 25565)
